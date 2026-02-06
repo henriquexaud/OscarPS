@@ -72,7 +72,11 @@ Fluxo esperado: POST retorna `PENDING`; worker aplica lock → simula ~2s → ma
 - `npm run db:migrate` — aplica migrações.
 - `npm run db:generate` — regenera Prisma Client.
 - `npm run build` — checa tipos/emite build.
-- `npm test` — placeholder (Vitest instalado).
+- `npm test` — roda testes unitários (Vitest) para o serviço de pedidos.
+
+## Testes
+
+Execute `npm test` para rodar o conjunto de testes unitários. `npm run test:watch` mantém o Vitest em modo watch.
 
 ## Decisões técnicas (e por quê)
 

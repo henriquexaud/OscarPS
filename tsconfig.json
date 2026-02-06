@@ -7,7 +7,7 @@
     "target": "es2021",
     "lib": ["ES2021"],
     "moduleResolution": "node",
-    "types": ["node"],
+    "types": ["node", "vitest/globals"],
     "sourceMap": true,
     "declaration": false,
     "strict": true,
