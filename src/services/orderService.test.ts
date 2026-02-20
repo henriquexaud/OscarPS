@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { Prisma } from '@prisma/client'
+import { IOrderRepository } from '../repositories/IOrderRepository'
 
 process.env.DATABASE_URL ||= 'postgresql://postgres:postgres@localhost:5432/oscarps?schema=public'
 process.env.NODE_ENV = 'test'
@@ -16,17 +17,6 @@ type OrderShape = {
   createdAt: Date
 }
 
-const { orderDelegate } = vi.hoisted(() => ({
-  orderDelegate: {
-    create: vi.fn(),
-    findUnique: vi.fn(),
-  },
-}))
-
-vi.mock('../db/prisma', () => ({
-  prisma: { order: orderDelegate },
-}))
-
 import { createOrder } from './orderService'
 
 const buildOrder = (overrides?: Partial<OrderShape>): OrderShape => ({
@@ -42,6 +32,16 @@ const buildOrder = (overrides?: Partial<OrderShape>): OrderShape => ({
   ...overrides,
 })
 
+const makeRepo = (overrides?: Partial<IOrderRepository>): IOrderRepository => ({
+  create: vi.fn(),
+  findByOrderId: vi.fn(),
+  findPending: vi.fn(),
+  lockById: vi.fn(),
+  markProcessed: vi.fn(),
+  markFailed: vi.fn(),
+  ...overrides,
+})
+
 describe('createOrder', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -49,37 +49,30 @@ describe('createOrder', () => {
 
   it('creates a new order when there is no duplicate', async () => {
     const expected = buildOrder({ orderId: 'ORD-NEW' })
-    orderDelegate.create.mockResolvedValue(expected)
+    const repo = makeRepo({ create: vi.fn().mockResolvedValue(expected) })
 
-    const result = await createOrder({ orderId: 'ORD-NEW', customer: 'Alice', total: 199.99 })
+    const result = await createOrder({ orderId: 'ORD-NEW', customer: 'Alice', total: 199.99 }, repo)
 
-    expect(orderDelegate.create).toHaveBeenCalledWith({
-      data: { orderId: 'ORD-NEW', customer: 'Alice', total: 199.99, status: 'PENDING' },
-    })
+    expect(repo.create).toHaveBeenCalledWith({ orderId: 'ORD-NEW', customer: 'Alice', total: 199.99 })
     expect(result).toBe(expected)
   })
 
-  it('returns the existing order when unique constraint hits orderId', async () => {
-    const duplicateError = new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
-      code: 'P2002',
-      clientVersion: 'test',
-      meta: { target: ['orderId'] },
-    })
-
+  it('retorna a ordem existente quando o repositório a resolve (ex.: duplicata tratada internamente)', async () => {
     const existing = buildOrder({ orderId: 'ORD-EXISTING' })
+    const repo = makeRepo({ create: vi.fn().mockResolvedValue(existing) })
 
-    orderDelegate.create.mockRejectedValue(duplicateError)
-    orderDelegate.findUnique.mockResolvedValue(existing)
-
-    const result = await createOrder({ orderId: 'ORD-EXISTING', customer: 'Bob', total: 50 })
+    const result = await createOrder({ orderId: 'ORD-EXISTING', customer: 'Bob', total: 50 }, repo)
 
     expect(result).toBe(existing)
   })
 
-  it('rethrows unknown errors from Prisma', async () => {
+  it('rethrows unknown errors from the repository', async () => {
     const unexpected = new Error('boom')
-    orderDelegate.create.mockRejectedValue(unexpected)
+    const repo = makeRepo({ create: vi.fn().mockRejectedValue(unexpected) })
 
-    await expect(createOrder({ orderId: 'ORD-ERR', customer: 'Eve', total: 10 })).rejects.toBe(unexpected)
+    await expect(
+      createOrder({ orderId: 'ORD-ERR', customer: 'Eve', total: 10 }, repo),
+    ).rejects.toBe(unexpected)
   })
 })
+
