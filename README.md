@@ -1,6 +1,6 @@
-# OscarPS Orders API + Worker
+# Orders API + Worker
 
-API Fastify + Prisma + PostgreSQL com worker de polling leve para processar pedidos de forma assíncrona (contexto e-commerce de calçados). Inclui Swagger UI, Docker Compose, validação via Zod (env e payload), e logs com Pino.
+API REST construída com Fastify + Prisma + PostgreSQL com worker de polling leve para processar pedidos de forma assíncrona. Inclui Swagger UI, Docker Compose, validação via Zod (env e payload) e logs estruturados com Pino.
 
 ## Como rodar (local)
 
@@ -43,13 +43,13 @@ docker compose up -d api worker
 ```
 curl -X POST http://localhost:3000/orders \
   -H "Content-Type: application/json" \
-  -d '{"orderId":"SHOE-001","customer":"Alice","total":199.99}'
+  -d '{"orderId":"ORD-001","customer":"Alice","total":199.99}'
 ```
 
 - Buscar por orderId:
 
 ```
-curl http://localhost:3000/orders/SHOE-001
+curl http://localhost:3000/orders/ORD-001
 ```
 
 Fluxo esperado: POST retorna `PENDING`; worker aplica lock → simula ~2s → marca `PROCESSED`. POST duplicado devolve o registro existente (200).
@@ -95,6 +95,6 @@ Execute `npm test` para rodar o conjunto de testes unitários. `npm run test:wat
 
 ## Testes rápidos manuais
 
-1. Criar pedido: `curl -X POST http://localhost:3000/orders -H "Content-Type: application/json" -d '{"orderId":"SHOE-002","customer":"Bob","total":149.9}'`
-2. Aguardar ~2s e verificar: `curl http://localhost:3000/orders/SHOE-002`
+1. Criar pedido: `curl -X POST http://localhost:3000/orders -H "Content-Type: application/json" -d '{"orderId":"ORD-002","customer":"Bob","total":149.9}'`
+2. Aguardar ~2s e verificar: `curl http://localhost:3000/orders/ORD-002`
    - Esperado: status `PROCESSED`, `attempts` zerado.

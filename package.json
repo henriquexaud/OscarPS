@@ -1,7 +1,7 @@
 {
-  "name": "oscarps",
+  "name": "orders-api",
   "version": "1.0.0",
-  "description": "Fastify + Prisma demo with background worker",
+  "description": "Orders API with async worker — Fastify + Prisma + PostgreSQL with background worker",
   "main": "dist/server.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",

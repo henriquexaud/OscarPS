@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { Prisma } from '@prisma/client'
 import { IOrderRepository } from '../repositories/IOrderRepository'
 
-process.env.DATABASE_URL ||= 'postgresql://postgres:postgres@localhost:5432/oscarps?schema=public'
+process.env.DATABASE_URL ||= 'postgresql://postgres:postgres@localhost:5432/ordersdb?schema=public'
 process.env.NODE_ENV = 'test'
 
 type OrderShape = {
